@@ -1,6 +1,7 @@
 <script>
 import CoachItem from '../../components/coaches/CoachItem.vue';
 import CoachFilter from '../../components/coaches/CoachFilter.vue';
+
 export default {
   data() {
     return {
@@ -9,23 +10,22 @@ export default {
         backend: true,
         career: true,
       },
+      isLoading: false,
+      error: null,
     };
   },
   components: { CoachItem, CoachFilter },
   computed: {
-
-    isCoach(){
-        return this.$store.getters['coaches/isCoach']
+    isCoach() {
+      return this.$store.getters['coaches/isCoach'];
     },
     filteredCoaches() {
-      
       const coaches = this.$store.getters['coaches/coaches'];
       console.log(this.activeFilters);
       console.log(coaches);
-      return coaches.filter(coach => {
+      return coaches.filter((coach) => {
         if (this.activeFilters.frontend && coach.areas.includes('frontend')) {
           return true;
-
         }
         if (this.activeFilters.backend && coach.areas.includes('backend')) {
           return true;
@@ -37,12 +37,28 @@ export default {
       });
     },
     hasCoaches() {
-      return this.$store.getters['coaches/hasCoaches'];
+      return !this.isLoading && this.$store.getters['coaches/hasCoaches'];
     },
+  },
+  created() {
+    this.loadCoaches();
   },
   methods: {
     setFilters(updatedFilters) {
       this.activeFilters = updatedFilters;
+    },
+    async loadCoaches(refresh = false) {
+      this.isLoading = true;
+      try {
+        await this.$store.dispatch('coaches/loadCoaches', {forceRefresh: refresh });
+      } catch (error) {
+        this.error = error.message || 'Oh noooooo';
+      }
+
+      this.isLoading = false;
+    },
+    handleError() {
+      this.error = null;
     },
   },
 };
@@ -50,14 +66,21 @@ export default {
 
 <template>
   <div>
+
+
     <coach-filter @change-filter="setFilters"></coach-filter>
     <base-card>
       <section>
         <div class="controls">
-          <base-button mode="outline">Refresh</base-button>
-          <base-button link to="/register" v-if="!isCoach"> Register to Coach </base-button>
+          <base-button mode="outline" @click="loadCoaches(true)">Refresh</base-button>
+          <base-button link to="/register" v-if="!isCoach && !isLoading">
+            Register to Coach
+          </base-button>
         </div>
-        <ul v-if="hasCoaches">
+        <div v-if="isLoading">
+          <base-spinner></base-spinner>
+        </div>
+        <ul v-else-if="hasCoaches">
           <coach-item
             v-for="coach in filteredCoaches"
             :key="coach.id"

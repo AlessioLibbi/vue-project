@@ -1,9 +1,17 @@
-import mutation from './mutation.js';
-import action from './action.js';
-import getters from './getters.js'
+import mutations from './mutation.js';
+import actions from './action.js';
+import getters from './getters.js';
+
 
 export default {
-    state(){},
-    mutation: {},
-    action: {},
+    namespaced:true,
+    state(){
+        return {
+            requests: []
+        }
+    },
+    mutations: mutations,
+    actions: actions,
+    getters: getters
+    
 }
